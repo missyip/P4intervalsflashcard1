@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+</style>
+<title>音程閃卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Lora:ital,wght@1,600&display=swap">
+<style>
+/* Layout: one big flash card in the middle of the page, answer buttons under it — sized for a classroom projector. Single light classroom theme by choice (matches 動物音程跳跳樂). */
+:root {
+  --sky: #e6f1f7;
+  --paper: #ffffff;
+  --ink: #23313b;
+  --muted: #5d6d78;
+  --line: #cfdde6;
+  --grass: #4f9a33;
+  --do: #8a2f86;
+  --jump: #e8781e;
+  --jump-soft: #f7c99f;
+  --wrong: #d0342c;
+  --focus: #1f6fb2;
+  --font-display: "LXGW WenKai TC", "Kaiti TC", "STKaiti", "DFKai-SB", "PingFang TC", "Microsoft JhengHei", serif;
+  --font-body: "PingFang TC", "PingFang HK", "Microsoft JhengHei", "Noto Sans TC", "Noto Sans CJK TC", system-ui, sans-serif;
+  color-scheme: light;
+}
+html { background: var(--sky); }
+body {
+  background: var(--sky); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+h1 { font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); font-weight: 700; margin: 0; letter-spacing: .04em; }
+.sub { margin: 0; color: var(--muted); font-size: 16px; }
+
+.bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.seg { display: inline-flex; background: var(--paper); border: 2px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button {
+  appearance: none; border: 0; background: transparent; font: inherit; font-family: var(--font-display);
+  font-size: 20px; font-weight: 700; color: var(--ink); padding: 6px 16px; border-radius: 999px; cursor: pointer; min-height: 44px;
+}
+.seg button[aria-pressed="true"] { background: var(--do); color: #fff; }
+.score { margin-left: auto; display: flex; gap: 14px; align-items: center; font-size: 18px; font-variant-numeric: tabular-nums; }
+.score b { font-size: 26px; font-family: var(--font-display); }
+.btn {
+  appearance: none; font: inherit; font-size: 16px; cursor: pointer; border: 2px solid var(--line); background: var(--paper);
+  color: var(--ink); border-radius: 999px; padding: 6px 16px; min-height: 44px;
+}
+.btn:hover { border-color: var(--muted); }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.card {
+  background: var(--paper); border-radius: 24px; padding: 18px 20px 22px;
+  display: grid; justify-items: center; gap: 8px;
+  box-shadow: 0 2px 0 var(--line), 0 18px 40px -28px rgba(35, 49, 59, .5);
+  position: relative;
+}
+.qno { position: absolute; top: 14px; left: 20px; font-family: var(--font-display); font-size: 20px; color: var(--muted); }
+.qkey { position: absolute; top: 14px; right: 20px; font-family: var(--font-display); font-size: 20px; color: var(--do); font-weight: 700; }
+.staff { display: block; width: 100%; max-width: min(820px, max(400px, calc((100vh - 420px) * 2.3))); height: auto; cursor: crosshair; touch-action: none; margin-top: 18px; }
+.answer-line { font-family: var(--font-display); font-size: clamp(40px, 7vw, 64px); display: flex; align-items: baseline; gap: 14px; line-height: 1.1; }
+.blank { display: inline-block; min-width: 1.9em; text-align: center; border-bottom: 3px solid var(--ink); color: var(--wrong); font-weight: 700; }
+.blank.pop { animation: pop .45s ease-out; }
+@keyframes pop { 0% { transform: scale(.4); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.listen { font-size: 18px; }
+.answer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 28px; }
+.tip { margin: 0; color: var(--muted); font-size: 15px; text-align: center; }
+
+.choices { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.choice {
+  appearance: none; font: inherit; cursor: pointer; font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(24px, 3.4vw, 34px); border: 3px solid var(--line); background: var(--paper); color: var(--ink);
+  border-radius: 18px; padding: 10px 4px; min-height: 76px;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.06);
+  transition: transform .1s;
+}
+.choice:hover:not(:disabled) { border-color: var(--do); background: #f7ecf6; transform: translateY(-2px); }
+.choice:disabled { cursor: not-allowed; }
+.choice.wrong { background: #fde4e2; border-color: #e07a72; color: #9b2c24; text-decoration: line-through; }
+.choice.right { background: #e1f3d6; border-color: var(--grass); color: #2f6b1a; }
+.choice.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+.feedback { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; justify-content: space-between; min-height: 64px; }
+.msg { margin: 0; flex: 1 1 380px; font-size: clamp(17px, 2.2vw, 22px); line-height: 1.5; padding: 12px 16px; border-radius: 16px; background: #fff6e8; border: 2px solid var(--jump-soft); }
+.msg.good { background: #ecf7e4; border-color: #b6dca0; }
+.msg.reveal { background: #fff; border-color: var(--line); }
+.msg:empty { display: none; }
+.msg i { font-family: "Lora", Georgia, serif; font-weight: 600; }
+.next {
+  appearance: none; font: inherit; font-family: var(--font-display); font-size: 26px; font-weight: 700; cursor: pointer;
+  background: var(--jump); color: #fff; border: 0; border-radius: 999px; padding: 10px 28px; min-height: 60px;
+}
+.next:hover { background: #d36712; }
+.keys-hint { margin: 0; color: var(--muted); font-size: 14px; text-align: center; }
+@media (max-width: 640px) {
+  .choices { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .score { margin-left: 0; width: 100%; }
+  .keys-hint { display: none; }
+  .staff { margin-top: 30px; }
+}
+/* short screens (e.g. 1024×768 / 1366×768 projectors): keep the whole card on one screen */
+@media (max-height: 860px) and (min-width: 641px) {
+  body { padding-block: 10px 12px; }
+  .wrap { gap: 10px; }
+  h1 { font-size: 30px; }
+  .sub, .tip, .keys-hint { display: none; }
+  .card { padding: 10px 16px 12px; gap: 4px; }
+  .qno, .qkey { top: 8px; font-size: 17px; }
+  .staff { margin-top: 10px; }
+  .answer-line { font-size: 48px; }
+  .choice { min-height: 62px; padding: 6px 4px; }
+  .feedback { min-height: 0; }
+  .msg { padding: 8px 14px; }
+  .next { min-height: 52px; font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { .blank.pop, .choice.shake { animation: none; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>音程閃卡</h1>
+    <p class="sub">看看紫色 <b style="color:var(--do)">d</b> 在哪裏，數一數兩個音相距多少度。</p>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="選大調">
+      <button type="button" id="k-C" aria-pressed="true">C大調</button>
+      <button type="button" id="k-F" aria-pressed="false">F大調</button>
+      <button type="button" id="k-R" aria-pressed="false">隨機</button>
+    </div>
+    <div class="score">
+      <span>答對 <b id="s-right">0</b></span>
+      <span>已答 <b id="s-done">0</b> 題</span>
+      <button class="btn" id="reset" type="button">重新開始</button>
+    </div>
+  </div>
+
+  <section class="card" aria-live="polite">
+    <span class="qno" id="qno">第 1 題</span>
+    <span class="qkey" id="qkey">C大調</span>
+    <svg class="staff" id="staff" viewBox="0 64 460 200" role="img" aria-label="音程題目"></svg>
+    <div class="answer-row">
+      <div class="answer-line"><span class="blank" id="blank">&nbsp;</span><span>度</span></div>
+      <button class="btn listen" id="listen" type="button">♪ 聽一聽</button>
+    </div>
+    <p class="tip">把游標或手指放在五線譜上，灰色音符可以幫你一線一間地數。</p>
+  </section>
+
+  <div class="choices" id="choices"></div>
+
+  <div class="feedback">
+    <p class="msg" id="msg"></p>
+    <button class="next" id="next" type="button" hidden>下一題 →</button>
+  </div>
+  <p class="keys-hint">老師用鍵盤：按 2 至 8 作答，按 Enter 到下一題。</p>
+</div>
+
+<script>
+const CLEF_PATH = "M434 2Q464 -103 464 -170Q464 -223 427.0 -257.0Q390 -291 337 -291Q287 -291 250.0 -261.5Q213 -232 213 -190Q213 -160 233.5 -133.5Q254 -107 283.5 -107.0Q313 -107 331.5 -128.5Q350 -150 350 -178Q350 -240 280 -240Q298 -268 338 -268Q353 -268 368.5 -263.5Q384 -259 401.0 -248.0Q418 -237 428.5 -213.5Q439 -190 439 -157Q439 -136 411 -6Q389 -12 356 -12Q259 -12 189.5 60.0Q120 132 120 232Q120 267 131.5 303.0Q143 339 157.5 366.5Q172 394 200.5 428.5Q229 463 248.5 483.5Q268 504 303 539Q280 621 280 689Q280 779 313.0 839.5Q346 900 379 900Q389 900 401.5 887.0Q414 874 426.0 851.0Q438 828 446.5 790.5Q455 753 455 710Q455 551 342 447L368 329Q384 332 397 332Q458 332 500.0 282.5Q542 233 542 162Q542 44 434 2ZM426 746Q426 801 394 801Q358 801 333.0 748.0Q308 695 308 630Q308 588 321 557Q359 580 392.5 639.5Q426 699 426 746ZM498 128Q498 183 466.0 216.0Q434 249 383 249L428 23Q498 52 498 128ZM407 17 361 247Q334 241 311.5 214.0Q289 187 289 158Q289 143 295.0 128.5Q301 114 309.5 104.0Q318 94 327.0 86.0Q336 78 342.0 74.5Q348 71 348 71L340 66Q307 75 277.5 106.0Q248 137 248 184Q248 231 277.5 270.5Q307 310 343 323L325 430Q168 299 168 177Q168 104 223.0 55.0Q278 6 348 6Q365 6 407 17Z";
+const FLAT_PATH = "M222 441Q275 441 302.0 408.0Q329 375 329 317Q329 273 299.5 234.0Q270 195 192.5 117.0Q115 39 56 -34V783L99 802V402Q148 441 222 441ZM232 308Q232 373 183 373Q159 373 134.5 358.5Q110 344 99 319V87Q159 155 195.5 214.5Q232 274 232 308Z";
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const SOLFA = ["d", "r", "m", "f", "s", "l", "t", "d"];
+const NUM_CN = ["一", "二", "三", "四", "五", "六", "七", "八"];
+const KEYS = {
+  C: { name: "C大調", baseStep: -2, freqs: [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25] },
+  F: { name: "F大調", baseStep: 1, freqs: [349.23, 392.0, 440.0, 466.16, 523.25, 587.33, 659.25, 698.46] }
+};
+const SP = 24, BOTTOM = 190, QX1 = 250, QX2 = 372;
+const stepY = s => BOTTOM - s * SP / 2;
+const solfa = d => SOLFA[d] + (d === 7 ? "ˈ" : "");
+
+const st = { mode: "C", key: "C", q: null, last: null, tries: 2, wrong: [], done: false, right: 0, answered: 0, num: 0, hover: null };
+
+/* sound */
+let actx = null;
+function tone(freq, when = 0) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const t = actx.currentTime + when, g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.45, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+    g.connect(actx.destination);
+    const o1 = actx.createOscillator(); o1.type = "sine"; o1.frequency.value = freq;
+    const g2 = actx.createGain(); g2.gain.setValueAtTime(0.18, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+    const o2 = actx.createOscillator(); o2.type = "sine"; o2.frequency.value = freq * 4;
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    o1.start(t); o2.start(t); o1.stop(t + 1.2); o2.stop(t + 0.3);
+  } catch (e) {}
+}
+
+/* question */
+function notes() { return st.q.doFirst ? [0, st.q.other] : [st.q.other, 0]; }
+function newQuestion() {
+  st.key = st.mode === "R" ? (Math.random() < 0.5 ? "C" : "F") : st.mode;
+  let q;
+  do { q = { other: 1 + Math.floor(Math.random() * 7), doFirst: Math.random() < 0.5 }; }
+  while (st.last && q.other === st.last.other && q.doFirst === st.last.doFirst);
+  st.q = q; st.last = q; st.tries = 2; st.wrong = []; st.done = false; st.num++;
+  document.getElementById("msg").textContent = "";
+  document.getElementById("msg").className = "msg";
+  document.getElementById("next").hidden = true;
+  render();
+}
+
+function drawStaff(showCount) {
+  const svg = document.getElementById("staff"), ink = "#23313b";
+  svg.innerHTML = "";
+  el("rect", { x: 0, y: 64, width: 460, height: 200, fill: "#ffffff" }, svg);
+  for (let i = 0; i < 5; i++) el("line", { x1: 8, x2: 446, y1: stepY(i * 2), y2: stepY(i * 2), stroke: ink, "stroke-width": 1.6 }, svg);
+  el("line", { x1: 438, x2: 438, y1: stepY(8), y2: stepY(0), stroke: ink, "stroke-width": 1.6 }, svg);
+  el("rect", { x: 442, y: stepY(8), width: 5, height: SP * 4, fill: ink }, svg);
+  const k = SP / 155;
+  el("path", { d: CLEF_PATH, fill: ink, transform: `translate(2 ${stepY(2)}) scale(${k} ${-k}) translate(0 -160)` }, svg);
+  let doX = 150;
+  if (st.key === "F") {
+    const kf = SP / 360;
+    el("path", { d: FLAT_PATH, fill: ink, transform: `translate(96 ${stepY(4)}) scale(${kf} ${-kf}) translate(0 -205)` }, svg);
+    doX = 162;
+  }
+  const base = KEYS[st.key].baseStep, dy = stepY(base);
+  if (base <= -2) el("line", { x1: doX - 17, x2: doX + 17, y1: stepY(-2), y2: stepY(-2), stroke: ink, "stroke-width": 2 }, svg);
+  el("rect", { x: doX - 12, y: dy - 12, width: 24, height: 24, rx: 4, fill: "#8a2f86" }, svg);
+  const dt = el("text", { x: doX, y: dy + 6.5, "text-anchor": "middle", "font-family": "Lora, Georgia, serif", "font-style": "italic", "font-weight": 600, "font-size": 20, fill: "#ffffff" }, svg);
+  dt.textContent = "d";
+  const [a, b] = notes();
+  [[a, QX1], [b, QX2]].forEach(([deg, x]) => {
+    const s = base + deg;
+    ledger(svg, x, s, ink);
+    head(svg, x, stepY(s), ink);
+    if (st.done) {   // show solfa under each note once the answer is shown
+      const t = el("text", { x, y: 254, "text-anchor": "middle", "font-family": "Lora, Georgia, serif", "font-style": "italic", "font-weight": 600, "font-size": 24, fill: "#8a2f86" }, svg);
+      t.textContent = SOLFA[deg];
+      if (deg === 7) { const tick = el("tspan", { dx: 2, dy: -6, "font-size": 26, "font-style": "normal", "font-weight": 700, "font-family": "Arial, sans-serif" }, t); tick.textContent = "'"; }
+    }
+  });
+  if (showCount) {
+    const lowX = a <= b ? QX1 : QX2, highX = a <= b ? QX2 : QX1;
+    const lo = base + Math.min(a, b), hi = base + Math.max(a, b), n = hi - lo + 1;
+    const dir = highX > lowX ? 1 : -1, x0 = lowX + dir * 26, x1 = highX - dir * 26;
+    for (let i = 0; i < n; i++) {
+      const x = x0 + (x1 - x0) * (n === 1 ? 0 : i / (n - 1)), y = stepY(lo + i);
+      el("circle", { cx: x, cy: y, r: 7.5, fill: "#e8781e" }, svg);
+      const t = el("text", { x, y: y + 4, "text-anchor": "middle", "font-size": 11.5, "font-weight": 700, fill: "#ffffff" }, svg);
+      t.textContent = i + 1;
+    }
+  }
+  if (st.hover) {
+    const g = el("g", { opacity: 0.75, "pointer-events": "none" }, svg);
+    ledger(g, st.hover.x, st.hover.step, "#5d6770");
+    head(g, st.hover.x, stepY(st.hover.step), "#5d6770");
+  }
+}
+function head(g, x, y, color) {
+  const n = el("g", { transform: `translate(${x} ${y})` }, g);
+  el("ellipse", { rx: 14, ry: 10, fill: color }, n);
+  el("ellipse", { rx: 6.5, ry: 4.6, fill: "#ffffff", transform: "rotate(-35)" }, n);
+}
+function ledger(g, x, step, color) {
+  for (let s = -2; s >= step; s -= 2) el("line", { x1: x - 22, x2: x + 22, y1: stepY(s), y2: stepY(s), stroke: color, "stroke-width": 2 }, g);
+  for (let s = 10; s <= step; s += 2) el("line", { x1: x - 22, x2: x + 22, y1: stepY(s), y2: stepY(s), stroke: color, "stroke-width": 2 }, g);
+}
+
+function render() {
+  const answer = st.q.other + 1;
+  drawStaff(st.done && st.tries === 0);
+  const blank = document.getElementById("blank");
+  blank.innerHTML = st.done ? NUM_CN[answer - 1] : "&nbsp;";
+  document.getElementById("qno").textContent = `第 ${st.num} 題`;
+  document.getElementById("qkey").textContent = KEYS[st.key].name;
+  document.getElementById("s-right").textContent = st.right;
+  document.getElementById("s-done").textContent = st.answered;
+  ["C", "F", "R"].forEach(m => document.getElementById("k-" + m).setAttribute("aria-pressed", String(st.mode === m)));
+  const box = document.getElementById("choices");
+  box.innerHTML = "";
+  for (let n = 2; n <= 8; n++) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "choice"; b.textContent = NUM_CN[n - 1] + "度";
+    if (st.wrong.includes(n)) b.classList.add("wrong");
+    if (st.done && n === answer) b.classList.add("right");
+    b.disabled = st.done || st.wrong.includes(n);
+    b.dataset.n = n;
+    b.addEventListener("click", () => answerQ(n));
+    box.appendChild(b);
+  }
+}
+
+function lineOrSpace(step) { return step % 2 === 0 ? "線" : "間"; }
+function answerQ(n) {
+  if (st.done || st.wrong.includes(n)) return;
+  const answer = st.q.other + 1, [a, b] = notes(), base = KEYS[st.key].baseStep;
+  const msg = document.getElementById("msg");
+  if (n === answer) {
+    st.done = true; st.right++; st.answered++;
+    msg.className = "msg good";
+    msg.innerHTML = (st.tries === 2 ? "一次就答對，好厲害！" : "答對了！") +
+      ` <i>${solfa(a)}</i> 和 <i>${solfa(b)}</i> 相距 <b>${NUM_CN[answer - 1]}度</b>。`;
+    play();
+    finish();
+    return;
+  }
+  st.tries--; st.wrong.push(n);
+  if (st.tries === 1) {
+    const s1 = base + a, s2 = base + b, p1 = lineOrSpace(s1), p2 = lineOrSpace(s2);
+    const odd = (s1 % 2 === 0) === (s2 % 2 === 0);
+    msg.className = "msg";
+    msg.innerHTML = `再試一次！提示：由較低的音數起，<b>兩個音都要數</b>。這兩個音是「${p1}到${p2}」，所以是<b>${odd ? "單數度（三、五、七）" : "雙數度（二、四、六、八）"}</b>。`;
+    render();
+    const btn = document.querySelector(`.choice[data-n="${n}"]`);
+    if (btn) { btn.classList.add("shake"); }
+  } else {
+    st.done = true; st.answered++;
+    msg.className = "msg reveal";
+    msg.innerHTML = `答案是 <b>${NUM_CN[answer - 1]}度</b>。看看五線譜上的橙色數字，由 1 數到 ${answer}。`;
+    finish();
+  }
+}
+function finish() {
+  render();
+  const blank = document.getElementById("blank");
+  blank.classList.remove("pop"); void blank.offsetWidth; blank.classList.add("pop");
+  const next = document.getElementById("next");
+  next.hidden = false; next.focus({ preventScroll: true });
+  const r = next.getBoundingClientRect();
+  if (r.bottom > window.innerHeight) next.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+function play() {
+  const f = KEYS[st.key].freqs, [a, b] = notes();
+  tone(f[a]); tone(f[b], 0.6);
+}
+
+/* events */
+["C", "F", "R"].forEach(m => document.getElementById("k-" + m).addEventListener("click", () => {
+  if (st.mode === m) return;
+  st.mode = m; newQuestion();
+}));
+document.getElementById("next").addEventListener("click", newQuestion);
+document.getElementById("listen").addEventListener("click", play);
+document.getElementById("reset").addEventListener("click", () => { st.right = 0; st.answered = 0; st.num = 0; st.last = null; newQuestion(); });
+const staff = document.getElementById("staff");
+function svgPoint(evt) {
+  const p = staff.createSVGPoint(); p.x = evt.clientX; p.y = evt.clientY;
+  return p.matrixTransform(staff.getScreenCTM().inverse());
+}
+["pointerdown", "pointermove"].forEach(ev => staff.addEventListener(ev, e => {
+  const p = svgPoint(e);
+  const h = { x: Math.max(205, Math.min(415, p.x)), step: Math.max(-3, Math.min(10, Math.round((BOTTOM - p.y) / (SP / 2)))) };
+  if (!st.hover || h.step !== st.hover.step || Math.abs(h.x - st.hover.x) > 1) { st.hover = h; drawStaff(st.done && st.tries === 0); }
+}));
+staff.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") { st.hover = null; drawStaff(st.done && st.tries === 0); } });
+document.addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("input, select, textarea")) return;
+  if (/^[2-8]$/.test(e.key)) { answerQ(+e.key); }
+  else if ((e.key === "Enter" || e.key === " ") && st.done && !(document.activeElement && document.activeElement.tagName === "BUTTON")) { e.preventDefault(); newQuestion(); }
+});
+
+newQuestion();
+</script>
+
+</body>
+</html>
